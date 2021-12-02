@@ -1,5 +1,7 @@
 import torch
+from torch import stack as tstack
 import numpy as np
+from core.nms_gpu import nms_gpu
 
 def center_to_corner_box3d(centers,
                            dims,
@@ -28,12 +30,43 @@ def center_to_corner_box3d(centers,
     corners += centers.reshape([-1, 1, 3])
     return corners
 
+# def corners_nd(dims, origin=0.5):
+#     """generate relative box corners based on length per dim and origin point. 
+#     基于每个尺寸的长度和原点生成相对长方体角点。
+#     Args:
+#         dims (float array, shape=[N, ndim]): array of length per dim
+#         origin (list or array or float): origin point relate to smallest point.
+    
+#     Returns:
+#         float array, shape=[N, 2 ** ndim, ndim]: returned corners. 
+#         point layout example: (2d) x0y0, x0y1, x1y0, x1y1;
+#             (3d) x0y0z0, x0y0z1, x0y1z0, x0y1z1, x1y0z0, x1y0z1, x1y1z0, x1y1z1
+#             where x0 < x1, y0 < y1, z0 < z1
+#     """
+#     ndim = int(dims.shape[1])
+#     corners_norm = np.stack(np.unravel_index(np.arange(2**ndim), [2] * ndim), axis=1)
+#     # now corners_norm has format: (2d) x0y0, x0y1, x1y0, x1y1
+#     # (3d) x0y0z0, x0y0z1, x0y1z0, x0y1z1, x1y0z0, x1y0z1, x1y1z0, x1y1z1
+#     # so need to convert to a format which is convenient to do other computing.
+#     # for 2d boxes, format is clockwise start with minimum point
+#     # for 3d boxes, please draw lines by your hand.
+#     if ndim == 2:
+#         # generate clockwise box corners
+#         corners_norm = corners_norm[[0, 1, 3, 2]]
+#     elif ndim == 3:
+#         corners_norm = corners_norm[[0, 1, 3, 2, 4, 5, 7, 6]]
+#     corners_norm = corners_norm - np.array(origin)
+#     corners = dims.reshape([-1, 1, ndim]) * corners_norm.reshape([1, 2**ndim, ndim])
+#     return corners
+
 def corners_nd(dims, origin=0.5):
-    """generate relative box corners based on length per dim and origin point. 
-    基于每个尺寸的长度和原点生成相对长方体角点。
+    """generate relative box corners based on length per dim and
+    origin point. 
+    
     Args:
         dims (float array, shape=[N, ndim]): array of length per dim
         origin (list or array or float): origin point relate to smallest point.
+        dtype (output dtype, optional): Defaults to np.float32 
     
     Returns:
         float array, shape=[N, 2 ** ndim, ndim]: returned corners. 
@@ -42,19 +75,23 @@ def corners_nd(dims, origin=0.5):
             where x0 < x1, y0 < y1, z0 < z1
     """
     ndim = int(dims.shape[1])
-    corners_norm = np.stack(np.unravel_index(np.arange(2**ndim), [2] * ndim), axis=1)
+    if isinstance(origin, float):
+        origin = [origin] * ndim
+    corners_norm = np.stack(
+        np.unravel_index(np.arange(2**ndim), [2] * ndim), axis=1)
     # now corners_norm has format: (2d) x0y0, x0y1, x1y0, x1y1
     # (3d) x0y0z0, x0y0z1, x0y1z0, x0y1z1, x1y0z0, x1y0z1, x1y1z0, x1y1z1
     # so need to convert to a format which is convenient to do other computing.
-    # for 2d boxes, format is clockwise start with minimum point
-    # for 3d boxes, please draw lines by your hand.
+    # for 2d boxes, format is clockwise start from minimum point
+    # for 3d boxes, please draw them by your hand.
     if ndim == 2:
         # generate clockwise box corners
         corners_norm = corners_norm[[0, 1, 3, 2]]
     elif ndim == 3:
         corners_norm = corners_norm[[0, 1, 3, 2, 4, 5, 7, 6]]
     corners_norm = corners_norm - np.array(origin)
-    corners = dims.reshape([-1, 1, ndim]) * corners_norm.reshape([1, 2**ndim, ndim])
+    corners_norm = torch.from_numpy(corners_norm).type_as(dims)
+    corners = dims.view(-1, 1, ndim) * corners_norm.view(1, 2**ndim, ndim)
     return corners
 
 def rotation_2d(points, angles):
@@ -72,6 +109,23 @@ def rotation_2d(points, angles):
     rot_cos = np.cos(angles).numpy()
     rot_mat_T = np.stack([[rot_cos, -rot_sin], [rot_sin, rot_cos]])
     return np.einsum('aij,jka->aik', points, rot_mat_T)
+
+# def rotation_2d(points, angles):
+#     """rotation 2d points based on origin point clockwise when angle positive.
+    
+#     Args:
+#         points (float array, shape=[N, point_size, 2]): points to be rotated.
+#         angles (float array, shape=[N]): rotation angle.
+#     Returns:
+#         float array: same shape as points
+#     """
+#     rot_sin = torch.sin(angles)
+#     rot_cos = torch.cos(angles)
+#     rot_mat_T = torch.stack(
+#         [tstack([rot_cos, -rot_sin]),
+#          tstack([rot_sin, rot_cos])])
+#     return torch.einsum('aij,jka->aik', (points, rot_mat_T))
+
 
 def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     """convert kitti locations, dimensions and angles to corners.
@@ -96,12 +150,24 @@ def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     corners += centers.reshape([-1, 1, 2])
     return corners
 
+    
+
+# def corner_to_standup_nd(boxes_corner):
+#     assert len(boxes_corner.shape) == 3
+#     standup_boxes = []
+#     boxes_corner = boxes_corner.numpy()
+#     standup_boxes.append(np.min(boxes_corner, axis=1))
+#     standup_boxes.append(np.max(boxes_corner, axis=1))
+#     return np.concatenate(standup_boxes, -1)
+
 def corner_to_standup_nd(boxes_corner):
-    assert len(boxes_corner.shape) == 3
+    ndim = boxes_corner.shape[2]
     standup_boxes = []
-    standup_boxes.append(np.min(boxes_corner, axis=1))
-    standup_boxes.append(np.max(boxes_corner, axis=1))
-    return np.concatenate(standup_boxes, -1)
+    for i in range(ndim):
+        standup_boxes.append(torch.min(boxes_corner[:, :, i], dim=1)[0])
+    for i in range(ndim):
+        standup_boxes.append(torch.max(boxes_corner[:, :, i], dim=1)[0])
+    return torch.stack(standup_boxes, dim=1)
 
 def nms(bboxes,
         scores,

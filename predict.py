@@ -1,5 +1,6 @@
 # SSD检测头
 import torch
+import numpy as np
 from core import box_torch_ops
 def second_box_decode(box_encodings, anchors, encode_angle_to_vector=False, smooth_dim=False):
     """box decode for VoxelNet in lidar
@@ -84,15 +85,16 @@ def predict(batch_anchor,box_preds,cls_preds,dir_cls_preds,anchors_mask):
                 top_labels = top_labels[top_scores_keep]
             boxes_for_nms = box_preds[:, [0, 1, 3, 4, 6]]
             box_preds_corners = box_torch_ops.center_to_corner_box2d(boxes_for_nms[:, :2], boxes_for_nms[:, 2:4],boxes_for_nms[:, 4])
-            print(box_preds_corners)
+            print("box_preds_corners")
+            print(box_preds_corners.shape)
             boxes_for_nms = box_torch_ops.corner_to_standup_nd(box_preds_corners)
             # the nms in 3d detection just remove overlap boxes.
             selected = nms_func(
                         boxes_for_nms,
                         top_scores,
-                        pre_max_size=self._nms_pre_max_size,
-                        post_max_size=self._nms_post_max_size,
-                        iou_threshold=self._nms_iou_threshold,
+                        pre_max_size=1000,
+                        post_max_size=300,
+                        iou_threshold=0.5,
                     )
         else:
             selected = None
@@ -116,21 +118,21 @@ def predict(batch_anchor,box_preds,cls_preds,dir_cls_preds,anchors_mask):
             final_box_preds = box_preds
             final_scores = scores
             final_labels = label_preds
-            camera_box_origin = [0.5, 1.0, 0.5]
-            box_corners = box_torch_ops.center_to_corner_box3d(
-                    locs, dims, angles, camera_box_origin, axis=1)
-            minxy = torch.min(box_corners_in_image, dim=1)[0]
-            maxxy = torch.max(box_corners_in_image, dim=1)[0]
-            box_2d_preds = torch.cat([minxy, maxxy], dim=1)
+            # camera_box_origin = [0.5, 1.0, 0.5]
+            # box_corners = box_torch_ops.center_to_corner_box3d(
+            #         locs, dims, angles, camera_box_origin, axis=1)
+            # minxy = torch.min(box_corners_in_image, dim=1)[0]
+            # maxxy = torch.max(box_corners_in_image, dim=1)[0]
+            # box_2d_preds = torch.cat([minxy, maxxy], dim=1)
             predictions_dict = {
-                    "bbox": box_2d_preds,
+                    # "bbox": box_2d_preds,
                     "box3d_lidar": final_box_preds,
                     "scores": final_scores,
                     "label_preds": label_preds,
                 }
         else:
             predictions_dict = {
-                    "bbox": None,
+                    # "bbox": None,
                     "box3d_lidar": None,
                     "scores": None,
                     "label_preds": None,

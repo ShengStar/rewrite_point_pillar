@@ -9,7 +9,6 @@ class BasicConv(nn.Module):
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, kernel_size//2, bias=False)
         self.bn = nn.BatchNorm2d(out_channels)
         self.activation = nn.LeakyReLU(0.1)
-
     def forward(self, x):
         x = self.conv(x)
         x = self.bn(x)
@@ -52,38 +51,40 @@ class backbone(nn.Module):
         self.conv3_2 = BasicConv(128, 128, 3)
         self.conv3_3 = BasicConv(128, 128, 3)
         self.conv3_4 = BasicConv(256, 256, 1)
-        self.maxpool = nn.MaxPool2d([2, 2], [2, 2])
+        #self.maxpool = nn.MaxPool2d([2, 2], [2, 2])
         # end res_block_3
         self.upsample = Upsample(512, 192)
         self.conv_cls = nn.Conv2d(384, 2, 1)
         self.conv_box = nn.Conv2d(384, 14, 1)
         self.conv_dir_cls = nn.Conv2d(384, 4, 1)
     def forward(self,x):
-        #pickle.dump(x, open('input.pkl', 'wb'))
+        pickle.dump(x, open('input.pkl', 'wb'))
         #print(x.shape)
         x = self.conv1_1(x)
-        print(x)
+        #print(x)
         #pickle.dump(x, open('conv1_1.pkl', 'wb'))
         route = x
         #pickle.dump(route, open('route.pkl', 'wb'))
         x = torch.split(x, 32, dim=1)[1]
         #pickle.dump(x, open('split.pkl', 'wb'))
+        #print(x)
         x = self.conv1_2(x)
         #pickle.dump(x, open('conv1_2.pkl', 'wb'))
+        #print(x)
         route1 = x
         #pickle.dump(route1, open('route1.pkl', 'wb'))
         x = self.conv1_3(x)
-        #pickle.dump(x, open('conv1_3.pkl', 'wb'))
+        pickle.dump(x, open('conv1_3.pkl', 'wb'))
         x = torch.cat([x, route1], dim=1)
-        #pickle.dump(x, open('cat1.pkl', 'wb'))
+        pickle.dump(x, open('cat1.pkl', 'wb'))
         x = self.conv1_4(x)
-        #pickle.dump(x, open('conv1_4.pkl', 'wb'))
+        pickle.dump(x, open('conv1_4.pkl', 'wb'))
         feat = x
-        #pickle.dump(feat, open('feat.pkl', 'wb'))
+        pickle.dump(feat, open('feat.pkl', 'wb'))
         x = torch.cat([route, x], dim=1)
-        #pickle.dump(x, open('cat2.pkl', 'wb'))
+        pickle.dump(x, open('cat2.pkl', 'wb'))
         x = self.maxpool(x)
-        #pickle.dump(x, open('maxpool1.pkl', 'wb'))
+        pickle.dump(x, open('maxpool1.pkl', 'wb'))
         feat1 = x
         #pickle.dump(feat1, open('feat1.pkl', 'wb'))
         feat12 = self.conv1_5(feat1)
@@ -112,9 +113,9 @@ class backbone(nn.Module):
         feat = x
         #pickle.dump(feat, open('feat21.pkl', 'wb'))
         x = torch.cat([route, x], dim=1)
-        #pickle.dump(x, open('cat21.pkl', 'wb'))
-        x = self.maxpool(x)
-        #pickle.dump(x, open('maxpool21.pkl', 'wb'))
+        pickle.dump(x, open('cat212.pkl', 'wb'))
+        x = self.maxpool_1(x)
+        pickle.dump(x, open('maxpool212.pkl', 'wb'))
         #print(x.shape)
         # end res_block_2
         # begin res_block_3

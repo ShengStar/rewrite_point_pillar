@@ -18,7 +18,7 @@ class Scatter(nn.Module):##把图像恢复为伪图
         :param num_input_features: <int>. Number of input features.
         """
         super().__init__()
-        output_shape = [400,352]
+        output_shape = [496,432]
         self.name = 'PointPillarsScatter'
         self.output_shape = output_shape
         self.ny = output_shape[0]
@@ -168,8 +168,8 @@ class voxel_feature_extractor(nn.Module):
             pfn_layers.append(PFNLayer(in_filters, out_filters, use_norm, last_layer=last_layer))
         self.pfn_layers = nn.ModuleList(pfn_layers)
 
-        voxel_size = (0.2, 0.2, 4)
-        pc_range = (0, -40, -3, 70.4, 40, 1)
+        voxel_size = (0.16, 0.16, 4)
+        pc_range = (0, -39.68, -3, 69.12, 39.68, 1)
 
         self.vx = voxel_size[0]
         self.vy = voxel_size[1]
@@ -211,8 +211,8 @@ class read_point(nn.Module):
 class pointpillars(nn.Module):
     def __init__(self):
         super(pointpillars, self).__init__()
-        self.coors_range = np.array([0, -40, -3, 70.4, 40, 1])
-        self.voxel_size = np.array([0.2, 0.2, 4])
+        self.coors_range = np.array([0, -39.68, -3, 69.12, 39.68, 1])
+        self.voxel_size = np.array([0.16, 0.16, 4])
 
     def forward(self, x,):
         max_points = 100

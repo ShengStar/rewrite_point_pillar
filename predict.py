@@ -7,7 +7,6 @@ def second_box_decode(box_encodings, anchors, encode_angle_to_vector=False, smoo
         boxes ([N, 7] Tensor): normal boxes: x, y, z, w, l, h, r
         anchors ([N, 7] Tensor): anchors
     """
-    anchors = torch.from_numpy(anchors)
     xa, ya, za, wa, la, ha, ra = torch.split(anchors, 1, dim=-1)
     if encode_angle_to_vector:
         xt, yt, zt, wt, lt, ht, rtx, rty = torch.split(
@@ -46,17 +45,16 @@ def predict(batch_anchor,box_preds,cls_preds,dir_cls_preds,anchors_mask):
     batch_size = 1
     nms_score_threshold = 0.05
     batch_anchors = batch_anchor
-    anchors_mask = torch.from_numpy(anchors_mask)
     #self._total_inference_count += batch_size
     batch_anchors_mask = anchors_mask.view(batch_size, -1)
     batch_box_preds = box_preds
     batch_cls_preds = cls_preds
-    batch_box_preds = batch_box_preds.view(1,-1,7)
+    batch_box_preds = batch_box_preds.contiguous().view(1,-1,7)
     num_class_with_bg = 1
-    batch_cls_preds = batch_cls_preds.view(1, -1, 1)
+    batch_cls_preds = batch_cls_preds.contiguous().view(1,-1, 1)
     batch_box_preds = second_box_decode(batch_box_preds,batch_anchors)
     batch_dir_preds = dir_cls_preds
-    batch_dir_preds = batch_dir_preds.view(batch_size, -1, 2)
+    batch_dir_preds = batch_dir_preds.contiguous().view(batch_size, -1, 2)
     predictions_dicts = []
     for box_preds, cls_preds, dir_preds,a_mask in zip(batch_box_preds,batch_cls_preds,batch_dir_preds,batch_anchors_mask):
         if a_mask is not None:
@@ -66,6 +64,7 @@ def predict(batch_anchor,box_preds,cls_preds,dir_cls_preds,anchors_mask):
             dir_preds = dir_preds[a_mask]
         dir_labels = torch.max(dir_preds, dim=-1)[1]
         total_scores = torch.sigmoid(cls_preds)
+        print(total_scores)
         nms_func = box_torch_ops.nms
         selected_boxes = None
         selected_labels = None
@@ -78,18 +77,15 @@ def predict(batch_anchor,box_preds,cls_preds,dir_cls_preds,anchors_mask):
             thresh = torch.tensor([nms_score_threshold],device=total_scores.device).type_as(total_scores)
             top_scores_keep = (top_scores >= thresh)
             top_scores = top_scores.masked_select(top_scores_keep)
-        print(top_scores)
         if top_scores.shape[0] != 0:
             if nms_score_threshold > 0.0:
                 box_preds = box_preds[top_scores_keep]
                 dir_labels = dir_labels[top_scores_keep]
                 top_labels = top_labels[top_scores_keep]
             boxes_for_nms = box_preds[:, [0, 1, 3, 4, 6]]
-            box_preds_corners = box_torch_ops.center_to_corner_box2d(
-                            boxes_for_nms[:, :2], boxes_for_nms[:, 2:4],
-                            boxes_for_nms[:, 4])
-            boxes_for_nms = box_torch_ops.corner_to_standup_nd(
-                            box_preds_corners)
+            box_preds_corners = box_torch_ops.center_to_corner_box2d(boxes_for_nms[:, :2], boxes_for_nms[:, 2:4],boxes_for_nms[:, 4])
+            print(box_preds_corners)
+            boxes_for_nms = box_torch_ops.corner_to_standup_nd(box_preds_corners)
             # the nms in 3d detection just remove overlap boxes.
             selected = nms_func(
                         boxes_for_nms,

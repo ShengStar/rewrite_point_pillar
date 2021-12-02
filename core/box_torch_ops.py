@@ -29,9 +29,8 @@ def center_to_corner_box3d(centers,
     return corners
 
 def corners_nd(dims, origin=0.5):
-    """generate relative box corners based on length per dim and
-    origin point. 
-    
+    """generate relative box corners based on length per dim and origin point. 
+    基于每个尺寸的长度和原点生成相对长方体角点。
     Args:
         dims (float array, shape=[N, ndim]): array of length per dim
         origin (list or array or float): origin point relate to smallest point.
@@ -43,9 +42,7 @@ def corners_nd(dims, origin=0.5):
             where x0 < x1, y0 < y1, z0 < z1
     """
     ndim = int(dims.shape[1])
-    corners_norm = np.stack(
-        np.unravel_index(np.arange(2**ndim), [2] * ndim), axis=1).astype(
-            dims.dtype)
+    corners_norm = np.stack(np.unravel_index(np.arange(2**ndim), [2] * ndim), axis=1)
     # now corners_norm has format: (2d) x0y0, x0y1, x1y0, x1y1
     # (3d) x0y0z0, x0y0z1, x0y1z0, x0y1z1, x1y0z0, x1y0z1, x1y1z0, x1y1z1
     # so need to convert to a format which is convenient to do other computing.
@@ -56,10 +53,25 @@ def corners_nd(dims, origin=0.5):
         corners_norm = corners_norm[[0, 1, 3, 2]]
     elif ndim == 3:
         corners_norm = corners_norm[[0, 1, 3, 2, 4, 5, 7, 6]]
-    corners_norm = corners_norm - np.array(origin, dtype=dims.dtype)
-    corners = dims.reshape([-1, 1, ndim]) * corners_norm.reshape(
-        [1, 2**ndim, ndim])
+    corners_norm = corners_norm - np.array(origin)
+    corners = dims.reshape([-1, 1, ndim]) * corners_norm.reshape([1, 2**ndim, ndim])
     return corners
+
+def rotation_2d(points, angles):
+    """rotation 2d points based on origin point clockwise when angle positive.
+    
+    Args:
+        points (float array, shape=[N, point_size, 2]): points to be rotated.
+        angles (float array, shape=[N]): rotation angle.
+
+    Returns:
+        float array: same shape as points
+    """
+    print(type(angles))
+    rot_sin = np.sin(angles).numpy()
+    rot_cos = np.cos(angles).numpy()
+    rot_mat_T = np.stack([[rot_cos, -rot_sin], [rot_sin, rot_cos]])
+    return np.einsum('aij,jka->aik', points, rot_mat_T)
 
 def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     """convert kitti locations, dimensions and angles to corners.
@@ -79,7 +91,8 @@ def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     corners = corners_nd(dims, origin=origin)
     # corners: [N, 4, 2]
     if angles is not None:
-        corners = rotation_2d(corners, angles)
+        corners = torch.from_numpy(rotation_2d(corners, angles))
+    print(type(corners))
     corners += centers.reshape([-1, 1, 2])
     return corners
 

@@ -256,7 +256,3 @@ class pointpillars(nn.Module):
         voxels = voxels[:voxel_num]##voxel和其中的点
         num_points_per_voxel = num_points_per_voxel[:voxel_num]#每个voxel中的点的数量
         return voxels, num_points_per_voxel, coors
-        #print(N)
-        #print(grid_size)
-
-        #print(x)

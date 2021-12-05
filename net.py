@@ -58,7 +58,7 @@ class backbone(nn.Module):
         self.conv_box = nn.Conv2d(384, 14, 1)
         self.conv_dir_cls = nn.Conv2d(384, 4, 1)
     def forward(self,x):
-        pickle.dump(x, open('input.pkl', 'wb'))
+        #pickle.dump(x, open('input.pkl', 'wb'))
         #print(x.shape)
         x = self.conv1_1(x)
         #print(x)
@@ -74,17 +74,17 @@ class backbone(nn.Module):
         route1 = x
         #pickle.dump(route1, open('route1.pkl', 'wb'))
         x = self.conv1_3(x)
-        pickle.dump(x, open('conv1_3.pkl', 'wb'))
+        #pickle.dump(x, open('conv1_3.pkl', 'wb'))
         x = torch.cat([x, route1], dim=1)
         pickle.dump(x, open('cat1.pkl', 'wb'))
         x = self.conv1_4(x)
         pickle.dump(x, open('conv1_4.pkl', 'wb'))
         feat = x
-        pickle.dump(feat, open('feat.pkl', 'wb'))
+        #pickle.dump(feat, open('feat.pkl', 'wb'))
         x = torch.cat([route, x], dim=1)
-        pickle.dump(x, open('cat2.pkl', 'wb'))
+        #pickle.dump(x, open('cat2.pkl', 'wb'))
         x = self.maxpool(x)
-        pickle.dump(x, open('maxpool1.pkl', 'wb'))
+        #pickle.dump(x, open('maxpool1.pkl', 'wb'))
         feat1 = x
         #pickle.dump(feat1, open('feat1.pkl', 'wb'))
         feat12 = self.conv1_5(feat1)
@@ -107,15 +107,15 @@ class backbone(nn.Module):
         x = self.conv2_3(x)
         #pickle.dump(x, open('conv2_3.pkl', 'wb'))
         x = torch.cat([x, route1], dim=1)
-        #pickle.dump(x, open('torch21.pkl', 'wb'))
+        #pickle.dump(x, open('x.pkl', 'wb'))
         x = self.conv2_4(x)
-        #pickle.dump(x, open('conv2_4.pkl', 'wb'))
+        #pickle.dump(x, open('xx.pkl', 'wb'))
         feat = x
         #pickle.dump(feat, open('feat21.pkl', 'wb'))
         x = torch.cat([route, x], dim=1)
-        pickle.dump(x, open('cat212.pkl', 'wb'))
+        #pickle.dump(x, open('cat212.pkl', 'wb'))
         x = self.maxpool_1(x)
-        pickle.dump(x, open('maxpool212.pkl', 'wb'))
+        #pickle.dump(x, open('maxpool212.pkl', 'wb'))
         #print(x.shape)
         # end res_block_2
         # begin res_block_3

@@ -109,7 +109,6 @@ class Precision(nn.Module):
         false_positives = (weights * (falses & pred_trues).float()).sum()
         false_negatives = (weights * (trues & pred_falses).float()).sum()
         count = true_positives + false_positives
-        # print(count, true_positives)
         if count > 0:
             self.count += count
             self.total += true_positives

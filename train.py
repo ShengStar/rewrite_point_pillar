@@ -80,10 +80,8 @@ class bulid_net(nn.Module):
         anchors_mask = anchors_area > anchor_area_threshold
         anchors_mask = anchors_mask.astype(np.uint8)
         #feature_expand = features_expand()
-        #print(features_expand())
         features_9 = self.voxel_feature_extractor(voxels, num_points_per_voxel, coors)  # 特征拓展
         scatter = Scatter()
         x = scatter(features_9, coors, 1)
-        #print(backbone())
         ret_dict =self.rpn(x)
         return ret_dict,anchors_mask

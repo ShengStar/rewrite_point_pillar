@@ -104,7 +104,6 @@ def rotation_2d(points, angles):
     Returns:
         float array: same shape as points
     """
-    print(type(angles))
     rot_sin = np.sin(angles).numpy()
     rot_cos = np.cos(angles).numpy()
     rot_mat_T = np.stack([[rot_cos, -rot_sin], [rot_sin, rot_cos]])
@@ -146,7 +145,6 @@ def center_to_corner_box2d(centers, dims, angles=None, origin=0.5):
     # corners: [N, 4, 2]
     if angles is not None:
         corners = torch.from_numpy(rotation_2d(corners, angles))
-    print(type(corners))
     corners += centers.reshape([-1, 1, 2])
     return corners
 

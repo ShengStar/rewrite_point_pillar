@@ -65,7 +65,6 @@ def predict(batch_anchor,box_preds,cls_preds,dir_cls_preds,anchors_mask):
             dir_preds = dir_preds[a_mask]
         dir_labels = torch.max(dir_preds, dim=-1)[1]
         total_scores = torch.sigmoid(cls_preds)
-        print(total_scores)
         nms_func = box_torch_ops.nms
         selected_boxes = None
         selected_labels = None
@@ -85,8 +84,6 @@ def predict(batch_anchor,box_preds,cls_preds,dir_cls_preds,anchors_mask):
                 top_labels = top_labels[top_scores_keep]
             boxes_for_nms = box_preds[:, [0, 1, 3, 4, 6]]
             box_preds_corners = box_torch_ops.center_to_corner_box2d(boxes_for_nms[:, :2], boxes_for_nms[:, 2:4],boxes_for_nms[:, 4])
-            print("box_preds_corners")
-            print(box_preds_corners.shape)
             boxes_for_nms = box_torch_ops.corner_to_standup_nd(box_preds_corners)
             # the nms in 3d detection just remove overlap boxes.
             selected = nms_func(

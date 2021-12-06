@@ -9,7 +9,7 @@ import numpy as np
 def sparse_sum_for_anchors_mask(coors, shape):
     ret = np.zeros(shape, dtype=np.float32)
     for i in range(coors.shape[0]):
-        ret[coors[i, 1], coors[i, 2]] += 1
+        ret[coors[i, 1], coors[i, 0]] += 1
     return ret
 
 def fused_get_anchors_area(dense_map, anchors_bv, stride, offset,
@@ -66,9 +66,17 @@ class bulid_net(nn.Module):
         x = readpoint(filename)  # 读取点云
         pointpillar = pointpillars()
         voxels, num_points_per_voxel, coors = pointpillar(x)  # 划分pillars
+       
+        #feature_expand = features_expand()
+        features_9 = self.voxel_feature_extractor(voxels, num_points_per_voxel, coors)  # 特征拓展
+        scatter = Scatter()
+        x = scatter(features_9, coors, 1)
+        ret_dict =self.rpn(x)
+
         # 创建 anchor_mask
         anchors_mask = None
         # (496,432)
+        # coors,xyz
         dense_voxel_map = sparse_sum_for_anchors_mask(coors,[496,432])
         dense_voxel_map = dense_voxel_map.cumsum(0)
         dense_voxel_map = dense_voxel_map.cumsum(1)
@@ -79,9 +87,9 @@ class bulid_net(nn.Module):
         anchors_area = fused_get_anchors_area(dense_voxel_map,anchors_bv,[0.16,0.16,4],[0,-39.68,-3,69.12,39.68,1],[432,496,1])
         anchors_mask = anchors_area > anchor_area_threshold
         anchors_mask = anchors_mask.astype(np.uint8)
-        #feature_expand = features_expand()
-        features_9 = self.voxel_feature_extractor(voxels, num_points_per_voxel, coors)  # 特征拓展
-        scatter = Scatter()
-        x = scatter(features_9, coors, 1)
-        ret_dict =self.rpn(x)
+        # m = 0
+        # for i in range(107136):
+        #     m = m + anchors_mask[i]
+        #     print(m)
+        # print(sum(anchors_mask))
         return ret_dict,anchors_mask

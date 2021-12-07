@@ -2,6 +2,20 @@
 import torch
 import numpy as np
 from core import box_torch_ops
+def lidar_to_camera(points, r_rect, velo2cam):
+    points_shape = list(points.shape[:-1])
+    if points.shape[-1] == 3:
+        points = np.concatenate([points, np.ones(points_shape + [1])], axis=-1)
+    camera_points = points @ (np.array(r_rect) @ np.array(velo2cam)).T
+    return camera_points[..., :3]
+
+def box_lidar_to_camera(data, r_rect, velo2cam):
+    xyz_lidar = data[:, 0:3]
+    w, l, h = data[:, 3:4], data[:, 4:5], data[:, 5:6]
+    r = data[:, 6:7]
+    xyz = lidar_to_camera(xyz_lidar, r_rect, velo2cam)
+    return np.concatenate([xyz, l, h, w, r], axis=1)
+
 def second_box_decode(box_encodings, anchors, encode_angle_to_vector=False, smooth_dim=False):
     """box decode for VoxelNet in lidar
     Args:
@@ -46,10 +60,13 @@ def predict(batch_anchor,box_preds,cls_preds,dir_cls_preds,anchors_mask):
     batch_size = 1
     nms_score_threshold = 0.05
     batch_anchors = batch_anchor
+    print(batch_anchors.shape)
     #self._total_inference_count += batch_size
     batch_anchors_mask = anchors_mask.view(batch_size, -1)
     batch_box_preds = box_preds
     batch_cls_preds = cls_preds
+    print(batch_box_preds.shape)
+    print(batch_cls_preds.shape)
     batch_box_preds = batch_box_preds.contiguous().view(1,-1,7)
     num_class_with_bg = 1
     batch_cls_preds = batch_cls_preds.contiguous().view(1,-1, 1)
@@ -57,6 +74,14 @@ def predict(batch_anchor,box_preds,cls_preds,dir_cls_preds,anchors_mask):
     batch_dir_preds = dir_cls_preds
     batch_dir_preds = batch_dir_preds.contiguous().view(batch_size, -1, 2)
     predictions_dicts = []
+    rect =[ [ 0.9999,  0.0098, -0.0074,  0.0000],
+        [-0.0099,  0.9999, -0.0043,  0.0000],
+        [ 0.0074,  0.0044,  1.0000,  0.0000],
+        [ 0.0000,  0.0000,  0.0000,  1.0000]]
+    Trv2c = [[ 7.5337e-03, -9.9997e-01, -6.1660e-04, -4.0698e-03],
+        [ 1.4802e-02,  7.2807e-04, -9.9989e-01, -7.6316e-02],
+        [ 9.9986e-01,  7.5238e-03,  1.4808e-02, -2.7178e-01],
+        [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]]
     for box_preds, cls_preds, dir_preds,a_mask in zip(batch_box_preds,batch_cls_preds,batch_dir_preds,batch_anchors_mask):
         if a_mask is not None:
             box_preds = box_preds[a_mask]
@@ -112,9 +137,13 @@ def predict(batch_anchor,box_preds,cls_preds,dir_cls_preds,anchors_mask):
                         opp_labels,
                         torch.tensor(np.pi).type_as(box_preds),
                         torch.tensor(0.0).type_as(box_preds))
+
+            
             final_box_preds = box_preds
             final_scores = scores
             final_labels = label_preds
+            final_box_preds_camera = box_lidar_to_camera(
+                    final_box_preds, rect, Trv2c)
             # camera_box_origin = [0.5, 1.0, 0.5]
             # box_corners = box_torch_ops.center_to_corner_box3d(
             #         locs, dims, angles, camera_box_origin, axis=1)
@@ -123,6 +152,7 @@ def predict(batch_anchor,box_preds,cls_preds,dir_cls_preds,anchors_mask):
             # box_2d_preds = torch.cat([minxy, maxxy], dim=1)
             predictions_dict = {
                     # "bbox": box_2d_preds,
+                    "box3d_camera": final_box_preds_camera,
                     "box3d_lidar": final_box_preds,
                     "scores": final_scores,
                     "label_preds": label_preds,

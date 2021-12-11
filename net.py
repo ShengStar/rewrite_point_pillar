@@ -76,9 +76,9 @@ class backbone(nn.Module):
         x = self.conv1_3(x)
         #pickle.dump(x, open('conv1_3.pkl', 'wb'))
         x = torch.cat([x, route1], dim=1)
-        pickle.dump(x, open('cat1.pkl', 'wb'))
+        #pickle.dump(x, open('cat1.pkl', 'wb'))
         x = self.conv1_4(x)
-        pickle.dump(x, open('conv1_4.pkl', 'wb'))
+        #pickle.dump(x, open('conv1_4.pkl', 'wb'))
         feat = x
         #pickle.dump(feat, open('feat.pkl', 'wb'))
         x = torch.cat([route, x], dim=1)

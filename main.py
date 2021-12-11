@@ -19,9 +19,9 @@ def get_start_result_anno():
     return annotations
 
 if __name__ == '__main__':
-    filename = '000116.bin'
+    filename = '/home8T/000116.bin'
     net = bulid_net()
-    net.load_state_dict(torch.load("voxelnet-296960.tckpt"))
+    net.load_state_dict(torch.load("/home8T/voxelnet-296960.tckpt"))
     net.eval()
     preds_dict , anchors_masks = net(filename)
     anchors_mask = torch.tensor(np.expand_dims(anchors_masks, 0))
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     
     #anchors_mask = torch.tensor(anchors_mask)
 
-    batch_anchor = torch.tensor(np.load("batch_anchors.npy"))
+    batch_anchor = torch.tensor(np.load("/home8T/batch_anchors.npy"))
     # box_preds = torch.tensor(preds_dict["box_preds"].swapaxes(1,3))
     # cls_preds = torch.tensor(preds_dict["cls_preds"].swapaxes(1,3))
     # dir_cls_preds = torch.tensor(preds_dict["dir_cls_preds"].swapaxes(1,3))

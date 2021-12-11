@@ -80,7 +80,7 @@ class bulid_net(nn.Module):
         dense_voxel_map = sparse_sum_for_anchors_mask(coors,[496,432])
         dense_voxel_map = dense_voxel_map.cumsum(0)
         dense_voxel_map = dense_voxel_map.cumsum(1)
-        anchors_bv = np.load("anchors_bv.npy")
+        anchors_bv = np.load("/home8T/anchors_bv.npy")
         # [0.16,0.16,4]
         # [0,-39.68,-3,69.12,39.68,1]
         # [432,496,1]

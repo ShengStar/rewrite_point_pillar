@@ -115,44 +115,45 @@ class backbone(nn.Module):
         x = torch.cat([route, x], dim=1)
         #pickle.dump(x, open('cat212.pkl', 'wb'))
         x = self.maxpool_1(x)
-        pickle.dump(x, open('/home8T/sent/maxpool212.pkl', 'wb'))
+        # pickle.dump(x, open('/home8T/sent/maxpool212.pkl', 'wb'))
         #print(x.shape)
         # end res_block_2
         # begin res_block_3
         #print(x.shape)
         x = self.conv3_1(x)
-        pickle.dump(x, open('/home8T/sent/conv3_1.pkl', 'wb'))
+        # pickle.dump(x, open('/home8T/sent/conv3_1.pkl', 'wb'))
         route = x
-        pickle.dump(route, open('/home8T/sent/route31.pkl', 'wb'))
+        # pickle.dump(route, open('/home8T/sent/route31.pkl', 'wb'))
         x = torch.split(x, 128, dim=1)[1]
-        pickle.dump(x, open('/home8T/sent/split21.pkl', 'wb'))
+        # pickle.dump(x, open('/home8T/sent/split21.pkl', 'wb'))
         x = self.conv3_2(x)
-        pickle.dump(x, open('/home8T/sent/conv3_2.pkl', 'wb'))
+        # pickle.dump(x, open('/home8T/sent/conv3_2.pkl', 'wb'))
         route1 = x
-        pickle.dump(route1, open('/home8T/sent/route31.pkl', 'wb'))
+        # pickle.dump(route1, open('/home8T/sent/route31.pkl', 'wb'))
         x = self.conv3_3(x)
-        pickle.dump(x, open('/home8T/sent/conv3_3.pkl', 'wb'))
+        # pickle.dump(x, open('/home8T/sent/conv3_3.pkl', 'wb'))
         x = torch.cat([x, route1], dim=1)
-        pickle.dump(x, open('/home8T/sent/cat31.pkl', 'wb'))
+        # pickle.dump(x, open('/home8T/sent/cat31.pkl', 'wb'))
         x = self.conv3_4(x)
-        pickle.dump(x, open('/home8T/sent/conv3_4.pkl', 'wb'))
+        # pickle.dump(x, open('/home8T/sent/conv3_4.pkl', 'wb'))
         feat = x
-        pickle.dump(feat, open('/home8T/sent/feat32.pkl', 'wb'))
+        # pickle.dump(feat, open('/home8T/sent/feat32.pkl', 'wb'))
         x = torch.cat([route, x], dim=1)
-        pickle.dump(x, open('/home8T/sent/cat33.pkl', 'wb'))
+        # pickle.dump(x, open('/home8T/sent/cat33.pkl', 'wb'))
         # x = self.maxpool(x)
         #print(x.shape)
         # end res_block_3
         x = self.upsample(x)
+        pickle.dump(x, open('/home8T/sent/upsample.pkl', 'wb'))
         #print(x.shape)
         x = torch.cat([x, feat12], axis=1)
-        #pickle.dump(x, open('cat4.pkl', 'wb'))
+        pickle.dump(x, open('/home8T/sent/cat4.pkl', 'wb'))
         box_preds = self.conv_box(x)  ##
-        #pickle.dump(box_preds, open('box_preds.pkl', 'wb'))
+        pickle.dump(box_preds, open('/home8T/sent/box_preds.pkl', 'wb'))
         cls_preds = self.conv_cls(x)  ##
-        #pickle.dump(cls_preds, open('box_preds.pkl', 'wb'))
+        pickle.dump(cls_preds, open('/home8T/sent/cls_preds.pkl', 'wb'))
         dir_cls_preds = self.conv_dir_cls(x)  ##
-        #pickle.dump(cls_preds, open('cls_preds.pkl', 'wb'))
+        pickle.dump(dir_cls_preds, open('/home8T/sent/dir_cls_preds.pkl', 'wb'))
         ret_dict = {
             "box_preds": box_preds,
             "cls_preds": cls_preds,

@@ -29,10 +29,7 @@ if __name__ == '__main__':
     # cls_preds = preds_dict["cls_preds"]
     # dir_cls_preds = preds_dict["dir_cls_preds"]
     box_preds = torch.tensor(np.load("/home8T/batch_box_preds.npy"))
-    
     cls_preds = torch.tensor(np.load("/home8T/batch_cls_preds.npy"))
-    print(cls_preds.shape)
-    print(cls_preds)
     dir_cls_preds = torch.tensor(np.load("/home8T/batch_dir_preds.npy"))
     anchors_mask = torch.tensor(np.load("/home8T/batch_anchors_mask.npy"))
     # print(anchors_mask.shape)
